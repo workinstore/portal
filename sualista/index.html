@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Catálogo Retro - Monte sua lista de jogos e escolha seu pendrive." />
+  <title>Workin'Store | Sua lista</title>
+  <link id="faviconLink" rel="icon" href="favicon.ico" type="image/x-icon" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Loader inicial -->
+  <div id="appLoader" class="app-loader">
+    <div class="loader-ring"></div>
+    <p>Carregando catálogo...</p>
+  </div>
+
+  <!-- ============================================================
+       ÁREA PÚBLICA
+       ============================================================ -->
+  <div id="publicApp" class="hidden">
+    <header class="site-header glass">
+      <div class="header-inner">
+        <div class="brand">
+          <img id="siteLogo" src="" alt="Logo" class="brand-logo" />
+          <h1 id="siteTitle" class="brand-title">Catálogo Retro</h1>
+        </div>
+        <div class="header-actions">
+          <button id="openCartBtn" class="btn btn-neon">
+            <i class="fa-solid fa-list"></i>
+            <span>Minha Lista</span>
+            <span id="cartBadge" class="badge">0</span>
+          </button>
+          <button id="adminLoginBtn" class="btn btn-ghost" title="Área do administrador">
+            <i class="fa-solid fa-user-shield"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Barra do pendrive (sempre visível) -->
+    <section class="pendrive-bar glass">
+      <div class="pendrive-controls">
+        <label for="pendriveSelect"><i class="fa-solid fa-hard-drive"></i> Pendrive:</label>
+        <select id="pendriveSelect" class="select-neon"></select>
+        <div id="pendriveButtons" class="pendrive-buttons" role="group" aria-label="Selecionar capacidade"></div>
+      </div>
+      <div class="pendrive-progress">
+        <div class="progress-track">
+          <div id="pendriveBar" class="progress-fill" style="width:0%"></div>
+        </div>
+        <div class="pendrive-stats">
+          <span><b id="usedGB">0.00</b> GB usados</span>
+          <span><b id="freeGB">0.00</b> GB livres</span>
+          <span><b id="percentUsed">0%</b></span>
+          <span><i class="fa-solid fa-gamepad"></i> <b id="qtyGames">0</b> jogos</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Filtros -->
+    <section class="filters glass">
+      <div class="filter-item search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input id="searchInput" type="text" placeholder="Pesquisar por nome, categoria ou subcategoria..." />
+      </div>
+      <select id="categoryFilter" class="select-neon"><option value="">Todas categorias</option></select>
+      <select id="subcategoryFilter" class="select-neon"><option value="">Todas subcategorias</option></select>
+      <select id="sortFilter" class="select-neon">
+        <option value="alpha">Ordem alfabética</option>
+        <option value="light">Mais leves</option>
+        <option value="heavy">Mais pesados</option>
+      </select>
+    </section>
+
+    <!-- Barra de modo de exibição (grid / lista) -->
+    <div class="view-toggle-bar">
+      <div class="view-toggle" role="group" aria-label="Modo de exibição">
+        <button type="button" class="vt-btn active" data-view-mode="grid" aria-pressed="true" title="Ver em grade">
+          <i class="fa-solid fa-th-large"></i><span>Grade</span>
+        </button>
+        <button type="button" class="vt-btn" data-view-mode="list" aria-pressed="false" title="Ver em lista">
+          <i class="fa-solid fa-list-ul"></i><span>Lista</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Aviso sobre jogos e patches (traduzidos/hacks) -->
+    <div class="warn-official" role="alert">
+      <div class="warn-official-title"><i class="fa-solid fa-triangle-exclamation"></i> Aviso sobre jogos e patches (traduzidos/hacks)</div>
+      <p>Jogos não-oficiais (traduções para PT-BR, patches ou versões alternativas) podem apresentar bugs, travamentos, tela preta ou problemas de compatibilidade. O funcionamento do jogo não é garantido e varia conforme o modelo e estado do seu PlayStation 2.</p>
+    </div>
+
+    <!-- Catálogo -->
+    <main class="catalog-wrapper">
+      <div id="gamesGrid" class="games-grid"></div>
+      <div id="emptyState" class="empty-state hidden">
+        <i class="fa-solid fa-ghost"></i>
+        <p>Nenhum jogo encontrado.</p>
+      </div>
+      <div id="pagination" class="pagination"></div>
+    </main>
+
+    <footer class="site-footer glass">
+      <p id="footerText">Catálogo Retro</p>
+    </footer>
+  </div>
+
+  <!-- ============================================================
+       MODAL: Detalhes do jogo
+       ============================================================ -->
+  <div id="gameModal" class="modal hidden">
+    <div class="modal-content glass">
+      <button class="modal-close" data-close="gameModal"><i class="fa-solid fa-xmark"></i></button>
+      <div class="game-detail">
+        <img id="gmImg" src="" alt="" />
+        <div class="game-detail-info">
+          <h2 id="gmName"></h2>
+          <p class="badges">
+            <span id="gmCat" class="tag"></span>
+            <span id="gmSub" class="tag"></span>
+          </p>
+          <p id="gmDesc"></p>
+          <ul class="specs">
+            <li><b>Compatibilidade:</b> <span id="gmComp"></span></li>
+            <li><b>Idioma:</b> <span id="gmLang"></span></li>
+            <li><b>Tamanho:</b> <span id="gmSize"></span> GB</li>
+            <li><b>Código:</b> <span id="gmCode"></span></li>
+          </ul>
+          <button id="gmAddBtn" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Adicionar à lista</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL: Carrinho / Lista
+       ============================================================ -->
+  <div id="cartModal" class="modal hidden">
+    <div class="modal-content glass wide">
+      <button class="modal-close" data-close="cartModal"><i class="fa-solid fa-xmark"></i></button>
+      <h2><i class="fa-solid fa-list"></i> Minha Lista</h2>
+      <div id="cartItems" class="cart-items"></div>
+      <div class="cart-summary">
+        <div><b id="cartQty">0</b> jogos • <b id="cartUsed">0.00</b> GB de <b id="cartCap">0.00</b> GB</div>
+        <div id="cartWarn" class="warn hidden"></div>
+      </div>
+
+      <form id="checkoutForm" class="checkout-form">
+        <h3>Dados para envio</h3>
+        <div class="grid-2">
+          <input required name="firstName" placeholder="Nome" />
+          <input required name="lastName" placeholder="Sobrenome" />
+          <input required name="whatsapp" placeholder="WhatsApp (com DDD)" />
+          <input required name="city" placeholder="Cidade" />
+          <input required name="uf" maxlength="2" placeholder="UF" />
+        </div>
+        <button id="finishBtn" type="submit" class="btn btn-primary btn-block" disabled>
+          <i class="fa-solid fa-paper-plane"></i> Finalizar Pedido
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL: Login Admin
+       ============================================================ -->
+  <div id="loginModal" class="modal hidden">
+    <div class="modal-content glass narrow">
+      <button class="modal-close" data-close="loginModal"><i class="fa-solid fa-xmark"></i></button>
+      <h2><i class="fa-solid fa-user-shield"></i> Painel Admin</h2>
+      <form id="loginForm" class="checkout-form">
+        <input required type="email" name="email" placeholder="E-mail" />
+        <input required type="password" name="password" placeholder="Senha" />
+        <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL: Preview JPG
+       ============================================================ -->
+  <div id="jpgModal" class="modal hidden">
+    <div class="modal-content glass wide">
+      <button class="modal-close" data-close="jpgModal"><i class="fa-solid fa-xmark"></i></button>
+      <h2>Pedido gerado</h2>
+      <img id="jpgPreview" alt="Pedido" style="max-width:100%;border-radius:12px;" />
+      <div class="row-actions">
+        <a id="downloadJpg" class="btn btn-primary" download="pedido.jpg"><i class="fa-solid fa-download"></i> Baixar JPG</a>
+        <a id="sendWhats" class="btn btn-neon" target="_blank"><i class="fa-brands fa-whatsapp"></i> Enviar no WhatsApp</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       PAINEL ADMINISTRATIVO
+       ============================================================ -->
+  <div id="adminApp" class="hidden admin-app">
+    <aside class="admin-sidebar glass">
+      <div class="brand small">
+        <i class="fa-solid fa-gamepad neon-purple"></i>
+        <h2>Admin</h2>
+      </div>
+      <nav class="admin-nav">
+        <button class="nav-item active" data-view="dashboard"><i class="fa-solid fa-gauge-high"></i> Dashboard</button>
+        <button class="nav-item" data-view="orders"><i class="fa-solid fa-receipt"></i> Pedidos</button>
+        <button class="nav-item" data-view="games"><i class="fa-solid fa-gamepad"></i> Jogos</button>
+        <button class="nav-item" data-view="categories"><i class="fa-solid fa-tags"></i> Categorias</button>
+        <button class="nav-item" data-view="subcategories"><i class="fa-solid fa-tag"></i> Subcategorias</button>
+        <button class="nav-item" data-view="pendrives"><i class="fa-solid fa-hard-drive"></i> Pendrives</button>
+        <button class="nav-item" data-view="settings"><i class="fa-solid fa-sliders"></i> Configurações</button>
+        <button id="logoutBtn" class="nav-item danger"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+      </nav>
+    </aside>
+    <main class="admin-main">
+      <header class="admin-topbar glass">
+        <button id="mobileMenuBtn" class="btn btn-ghost"><i class="fa-solid fa-bars"></i></button>
+        <h1 id="viewTitle">Dashboard</h1>
+        <div class="user-chip"><i class="fa-solid fa-user"></i> admin</div>
+      </header>
+      <section id="viewContainer" class="view-container"></section>
+    </main>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- Firebase (compat SDKs) -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
+
+  <script src="script.js"></script>
+</body>
+</html>
